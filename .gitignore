@@ -1,0 +1,47 @@
+# Upstream archives, extracted trees, and out-of-tree build outputs
+downloads/
+src/
+build/
+
+# Linux Kernel Module (Kbuild) artifacts
+*.ko
+*.o
+*.o.d
+*.mod
+*.mod.c
+*.mod.o
+*.cmd
+.*.cmd
+*.symvers
+*.order
+*.dwo
+Module.symvers
+modules.order
+.tmp_versions/
+.Module.symvers.cmd
+.modules.order.cmd
+
+# Userspace C23 build outputs
+*.elf
+*.out
+*.a
+*.so
+*.d
+userspace/bin/
+
+# Initramfs, disk images, and QEMU/GDB runtime files
+*.cpio
+*.cpio.gz
+*.img
+*.qcow2
+*.log
+.gdb_history
+
+# LSP, clangd index, and editor swap files
+compile_commands.json
+.cache/
+.clangd/
+*.swp
+*.swo
+*~
+.DS_Store

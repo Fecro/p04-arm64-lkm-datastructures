@@ -1,0 +1,41 @@
+# Global clangd configuration for p04-arm64-lkm-datastructures
+# Separates Linux Kernel (arm64) flags from Userspace C23 flags.
+
+---
+If:
+  PathMatch: module/.*
+CompileFlags:
+  CompilationDatabase: module
+  Add:
+    - --target=aarch64-linux-gnu
+  Remove:
+    # GCC-specific kernel flags not supported by clangd frontend
+    - -mabi=lp64
+    - -fconserve-stack
+    - -fno-allow-store-data-races
+    - -fno-var-tracking-assignments
+    - -femit-struct-debug-baseonly
+    - -mstack-protector-guard=*
+    - -mstack-protector-guard-reg=*
+    - -mstack-protector-guard-offset=*
+    - -ftrivial-auto-var-init=*
+    - -fmin-function-alignment=*
+    - -W*
+Diagnostics:
+  UnusedIncludes: None
+
+---
+If:
+  PathMatch: userspace/.*
+CompileFlags:
+  CompilationDatabase: userspace
+  Add:
+    - --target=aarch64-linux-gnu
+    - -std=c23
+    - -Wall
+    - -Wextra
+    - -Wpedantic
+  Remove:
+    - -fconserve-stack
+Diagnostics:
+  UnusedIncludes: Strict
