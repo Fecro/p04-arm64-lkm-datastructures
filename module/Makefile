@@ -1,6 +1,7 @@
-# Out-of-tree Kbuild Makefile for kds_store LKM
+# Out-of-tree Kbuild Makefile for composite kds_store LKM
 
 obj-m += kds_store.o
+kds_store-y := kds_main.o kds_core.o
 
 ARCH          ?= arm64
 CROSS_COMPILE ?= aarch64-linux-gnu-
