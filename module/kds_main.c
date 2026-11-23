@@ -68,23 +68,37 @@ static int __init kds_store_init(void)
 
 	if (run_selftest) {
 		ret = kds_run_boot_selftest(&g_store);
-		if (ret) {
-			kds_core_destroy(&g_store);
-			return ret;
-		}
+		if (ret)
+			goto err_core;
 	}
+
+	ret = kds_procfs_init(&g_store);
+	if (ret)
+		goto err_core;
+
+	ret = kds_sysfs_init(&g_store);
+	if (ret)
+		goto err_procfs;
 
 	kds_stats_snapshot(&g_store, &stats);
 	pr_info("loaded: max_entries=%u active=%llu updates=%llu hits=%llu misses=%llu\n",
 		g_store.max_entries, stats.active_entries, stats.update_count,
 		stats.lookup_hits, stats.lookup_misses);
 	return 0;
+
+err_procfs:
+	kds_procfs_exit(&g_store);
+err_core:
+	kds_core_destroy(&g_store);
+	return ret;
 }
 
 static void __exit kds_store_exit(void)
 {
 	struct kds_stats stats;
 
+	kds_sysfs_exit(&g_store);
+	kds_procfs_exit(&g_store);
 	kds_core_destroy(&g_store);
 	kds_stats_snapshot(&g_store, &stats);
 
@@ -100,4 +114,4 @@ MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Embedded Linux Portfolio");
 MODULE_DESCRIPTION(
 	"ARM64 LKM demonstrating slab, list_head, rbtree, procfs, and sysfs");
-MODULE_VERSION("0.4.3");
+MODULE_VERSION("0.5.3");

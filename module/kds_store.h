@@ -12,6 +12,9 @@
 #include <linux/spinlock.h>
 #include <linux/types.h>
 
+struct kobject;
+struct proc_dir_entry;
+
 #define KDS_CACHE_NAME "kds_entry_cache"
 #define KDS_TAG_MAX_LEN 64
 #define KDS_DEFAULT_MAX_ENTRIES 1024U
@@ -91,6 +94,10 @@ struct kds_store {
 	u32 entry_count;
 	struct list_head entry_list;
 	struct rb_root entry_tree;
+	struct proc_dir_entry *proc_dir;
+	struct kobject *kobj;
+	struct kds_entry_snapshot last_lookup;
+	bool has_last_lookup;
 };
 
 /* Core lifecycle and CRUD operations (kds_core.c) */
@@ -106,5 +113,11 @@ int kds_store_del(struct kds_store *store, u32 id);
 void kds_store_clear_all(struct kds_store *store);
 int kds_store_set_max_entries(struct kds_store *store, u32 new_max);
 void kds_stats_snapshot(struct kds_store *store, struct kds_stats *out);
+/* procfs interface (kds_procfs.c) */
+int kds_procfs_init(struct kds_store *store);
+void kds_procfs_exit(struct kds_store *store);
+/* sysfs interface (kds_sysfs.c) */
+int kds_sysfs_init(struct kds_store *store);
+void kds_sysfs_exit(struct kds_store *store);
 
 #endif /* _KDS_STORE_H */
