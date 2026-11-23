@@ -1,0 +1,28 @@
+# Kernel configuration fragment for p04-arm64-lkm-datastructures
+# Target: QEMU arm64 virt | Purpose: LKM development, kmemleak, and live GDB debugging
+
+# Loadable Kernel Modules support
+CONFIG_MODULES=y
+CONFIG_MODULE_UNLOAD=y
+
+# Virtual filesystems required by the module and diagnostics
+CONFIG_PROC_FS=y
+CONFIG_SYSFS=y
+CONFIG_DEBUG_FS=y
+
+# Full DWARF5 debug info and GDB helper scripts (lx-symbols, lx-dmesg, etc.)
+CONFIG_DEBUG_KERNEL=y
+# CONFIG_DEBUG_INFO_NONE is not set
+CONFIG_DEBUG_INFO=y
+CONFIG_DEBUG_INFO_DWARF5=y
+# CONFIG_DEBUG_INFO_REDUCED is not set
+CONFIG_GDB_SCRIPTS=y
+CONFIG_FRAME_POINTER=y
+
+# Disable KASLR so vmlinux and LKM symbols resolve deterministically in GDB
+# CONFIG_RANDOMIZE_BASE is not set
+
+# Kernel memory leak detector and slab debugging
+CONFIG_DEBUG_KMEMLEAK=y
+CONFIG_DEBUG_KMEMLEAK_MEM_POOL_SIZE=16000
+CONFIG_SLUB_DEBUG=y
