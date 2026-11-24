@@ -7,6 +7,7 @@
 
 #include <linux/errno.h>
 #include <linux/list.h>
+#include <linux/limits.h>
 #include <linux/proc_fs.h>
 #include <linux/rbtree.h>
 #include <linux/seq_file.h>
@@ -83,33 +84,59 @@ static const struct proc_ops kds_list_proc_ops = {
 
 /* ---- /proc/kds_store/rbtree (sorted by unique ID) ---- */
 
+static struct rb_node *kds_rb_lower_bound(struct rb_root *root, u32 target_id)
+{
+	struct rb_node *node = root->rb_node;
+	struct rb_node *best = NULL;
+
+	while (node) {
+		struct kds_entry *cur =
+			rb_entry(node, struct kds_entry, rb_node);
+
+		if (cur->id >= target_id) {
+			best = node;
+			node = node->rb_left;
+		} else {
+			node = node->rb_right;
+		}
+	}
+	return best;
+}
+
 static void *kds_rb_seq_start(struct seq_file *m, loff_t *pos)
 {
 	struct kds_store *store = m->private;
-	struct rb_node *node;
-	loff_t idx = 1;
 
 	mutex_lock(&store->lock);
 	if (*pos == 0)
 		return SEQ_START_TOKEN;
 
-	node = rb_first(&store->entry_tree);
-	while (node && idx < *pos) {
-		node = rb_next(node);
-		idx++;
-	}
-	return node;
+	if (*pos > (loff_t)U32_MAX + 1)
+		return NULL;
+
+	return kds_rb_lower_bound(&store->entry_tree, (u32)(*pos - 1));
 }
 
 static void *kds_rb_seq_next(struct seq_file *m, void *v, loff_t *pos)
 {
 	struct kds_store *store = m->private;
+	struct rb_node *next_node;
 
-	(*pos)++;
 	if (v == SEQ_START_TOKEN)
-		return rb_first(&store->entry_tree);
+		next_node = rb_first(&store->entry_tree);
+	else
+		next_node = rb_next((struct rb_node *)v);
 
-	return rb_next((struct rb_node *)v);
+	if (next_node) {
+		struct kds_entry *entry =
+			rb_entry(next_node, struct kds_entry, rb_node);
+
+		*pos = (loff_t)entry->id + 1;
+	} else {
+		*pos = (loff_t)U32_MAX + 2;
+	}
+
+	return next_node;
 }
 
 static void kds_rb_seq_stop(struct seq_file *m, void *v)

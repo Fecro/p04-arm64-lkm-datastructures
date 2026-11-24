@@ -12,8 +12,10 @@ ROOTFS_DIR    := $(BUILD_DIR)/rootfs
 INITRAMFS     := $(BUILD_DIR)/initramfs.cpio.gz
 MODULE_DIR    := $(ROOT_DIR)/module
 MODULE_KO     := $(MODULE_DIR)/kds_store.ko
+USER_DIR      := $(ROOT_DIR)/userspace
+USER_BIN      := $(USER_DIR)/bin/kds_tester
 
-.PHONY: help module lsp initramfs run debug clean-module
+.PHONY: help module lsp initramfs run debug clean-module userspace clean-userspace
 
 help:
 	@echo "Available targets:"
@@ -31,16 +33,27 @@ module:
 	@$(MAKE) initramfs
 	@echo "[OK] Installed $(MODULE_KO) into $(INITRAMFS)"
 
+userspace:
+	@$(MAKE) -C $(USER_DIR) CROSS_COMPILE=$(CROSS_COMPILE) all
+	@mkdir -p $(ROOTFS_DIR)/usr/bin
+	@cp $(USER_BIN) $(ROOTFS_DIR)/usr/bin/kds_tester
+	@$(MAKE) initramfs
+	@echo "[OK] Installed $(USER_BIN) into $(INITRAMFS)"
+
 lsp:
 	@python3 $(KERNEL_SRC)/scripts/clang-tools/gen_compile_commands.py \
 		-d $(KERNEL_BUILD) \
 		-o $(MODULE_DIR)/compile_commands.json \
 		$(MODULE_DIR)
-	@echo "[OK] Generated $(MODULE_DIR)/compile_commands.json"
+	@cd $(USER_DIR) && bear -- $(MAKE) clean all CROSS_COMPILE=$(CROSS_COMPILE) >/dev/null
+	@echo "[OK] Generated compile_commands.json for module/ and userspace/"
 
 initramfs:
 	@mkdir -p $(ROOTFS_DIR)/{proc,sys,dev,etc,tmp,root,lib/modules}
 	@cp $(ROOT_DIR)/rootfs/init $(ROOTFS_DIR)/init
+	@mkdir -p $(ROOTFS_DIR)/usr/bin
+	@cp $(ROOT_DIR)/rootfs/kds_memcheck.sh $(ROOTFS_DIR)/usr/bin/kds_memcheck.sh
+	@chmod +x $(ROOTFS_DIR)/usr/bin/kds_memcheck.sh
 	@chmod +x $(ROOTFS_DIR)/init
 	@cd $(ROOTFS_DIR) && \
 		find . -print0 | \
@@ -56,3 +69,6 @@ debug:
 
 clean-module:
 	@$(MAKE) -C $(MODULE_DIR) KDIR=$(KERNEL_BUILD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) clean
+
+clean-userspace:
+	@$(MAKE) -C $(USER_DIR) clean
