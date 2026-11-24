@@ -15,7 +15,7 @@ MODULE_KO     := $(MODULE_DIR)/kds_store.ko
 USER_DIR      := $(ROOT_DIR)/userspace
 USER_BIN      := $(USER_DIR)/bin/kds_tester
 
-.PHONY: help module lsp initramfs run debug clean-module userspace clean-userspace
+.PHONY: help module lsp initramfs run debug clean-module userspace clean-userspace gdb
 
 help:
 	@echo "Available targets:"
@@ -25,6 +25,7 @@ help:
 	@echo "  make run           - Boot Linux $(KERNEL_VER) arm64 in QEMU virt"
 	@echo "  make debug         - Boot QEMU paused, waiting for GDB on tcp::1234"
 	@echo "  make clean-module  - Clean out-of-tree LKM build artifacts"
+	@echo "  make gdb           - Start the GDB server"
 
 module:
 	@$(MAKE) -C $(MODULE_DIR) KDIR=$(KERNEL_BUILD) ARCH=$(ARCH) CROSS_COMPILE=$(CROSS_COMPILE) all
@@ -32,6 +33,9 @@ module:
 	@cp $(MODULE_KO) $(ROOTFS_DIR)/lib/modules/
 	@$(MAKE) initramfs
 	@echo "[OK] Installed $(MODULE_KO) into $(INITRAMFS)"
+
+gdb:
+	@$(ROOT_DIR)/scripts/attach_gdb.sh
 
 userspace:
 	@$(MAKE) -C $(USER_DIR) CROSS_COMPILE=$(CROSS_COMPILE) all
