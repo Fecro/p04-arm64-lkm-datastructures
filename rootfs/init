@@ -20,5 +20,17 @@ echo " Kernel: $(uname -r) | Arch: $(uname -m)"
 echo "=================================================="
 echo ""
 
+# Automated unattended demo mode triggered by 'make demo'
+if grep -q "kds_demo=1" /proc/cmdline; then
+    echo "[DEMO] Automated verification mode enabled"
+    if /usr/bin/kds_memcheck.sh 3; then
+        echo "[DEMO] All functional, SMP, and kmemleak checks PASSED."
+    else
+        echo "[DEMO] Verification FAILED."
+    fi
+    echo "[DEMO] Powering off QEMU..."
+    poweroff -f
+fi
+
 # Launch an interactive shell with proper job control (Ctrl+C) on ttyAMA0
 exec setsid cttyhack /bin/sh

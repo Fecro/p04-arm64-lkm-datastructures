@@ -3,6 +3,7 @@
 # Usage:
 #   ./scripts/run_qemu.sh          # Normal interactive boot
 #   ./scripts/run_qemu.sh --debug  # Wait for GDB connection on tcp::1234 (-s -S)
+#   ./scripts/run_qemu.sh --demo   # Unattended automated test & poweroff
 
 set -euo pipefail
 
@@ -20,11 +21,26 @@ if [[ ! -f "${INITRAMFS}" ]]; then
   exit 1
 fi
 
+CMDLINE="console=ttyAMA0 rdinit=/init nokaslr kmemleak=on loglevel=7"
 QEMU_EXTRA_ARGS=()
-if [[ "${1:-}" == "--debug" ]]; then
-  echo "[QEMU] Waiting for GDB on tcp::1234 (use gdb-multiarch)..."
+
+case "${1:-}" in
+--debug)
+  echo "[QEMU] Waiting for GDB on tcp::1234 (use 'make gdb' in another terminal)..."
   QEMU_EXTRA_ARGS+=(-s -S)
-fi
+  ;;
+--demo)
+  echo "[QEMU] Starting unattended automated portfolio demo..."
+  CMDLINE="${CMDLINE} kds_demo=1"
+  QEMU_EXTRA_ARGS+=(-no-reboot)
+  ;;
+"")
+  ;;
+*)
+  echo "Usage: $0 [--debug|--demo]" >&2
+  exit 1
+  ;;
+esac
 
 exec qemu-system-aarch64 \
   -M virt \
@@ -35,5 +51,5 @@ exec qemu-system-aarch64 \
   -audio none \
   -kernel "${KERNEL_IMG}" \
   -initrd "${INITRAMFS}" \
-  -append "console=ttyAMA0 rdinit=/init nokaslr kmemleak=on loglevel=7" \
+  -append "${CMDLINE}" \
   "${QEMU_EXTRA_ARGS[@]}"
